@@ -16,9 +16,9 @@
 #include <wayland-util.h>
 #include "config.h"
 #include "idle-client-protocol.h"
-#if HAVE_SYSTEMD
+#if HAVE_LIBSYSTEMD
 #include <systemd/sd-bus.h>
-#elif HAVE_ELOGIND
+#elif HAVE_LIBELOGIND
 #include <elogind/sd-bus.h>
 #endif
 
@@ -108,7 +108,7 @@ static void cmd_exec(char *param) {
 	}
 }
 
-#if HAVE_SYSTEMD || HAVE_ELOGIND
+#if HAVE_LOGIND
 static int lock_fd = -1;
 static struct sd_bus *bus = NULL;
 static char *session_name = NULL;
@@ -367,7 +367,7 @@ static void register_timeout(struct swayidle_timeout_cmd *cmd,
 static void handle_idle(void *data, struct org_kde_kwin_idle_timeout *timer) {
 	struct swayidle_timeout_cmd *cmd = data;
 	swayidle_log(LOG_DEBUG, "idle state");
-#if HAVE_SYSTEMD || HAVE_ELOGIND
+#if HAVE_LOGIND
 	if (cmd->idlehint) {
 		set_idle_hint(true);
 	} else
@@ -383,7 +383,7 @@ static void handle_resume(void *data, struct org_kde_kwin_idle_timeout *timer) {
 	if (cmd->registered_timeout != cmd->timeout) {
 		register_timeout(cmd, cmd->timeout);
 	}
-#if HAVE_SYSTEMD || HAVE_ELOGIND
+#if HAVE_LOGIND
 	if (cmd->idlehint) {
 		set_idle_hint(false);
 	} else
@@ -455,7 +455,7 @@ static int parse_timeout(int argc, char **argv) {
 }
 
 static int parse_sleep(int argc, char **argv) {
-#if !HAVE_SYSTEMD && !HAVE_ELOGIND
+#if !HAVE_LOGIND
 	swayidle_log(LOG_ERROR, "%s not supported: swayidle was compiled "
 		       "with neither systemd nor elogind support.", "before-sleep");
 	exit(-1);
@@ -475,7 +475,7 @@ static int parse_sleep(int argc, char **argv) {
 }
 
 static int parse_resume(int argc, char **argv) {
-#if !HAVE_SYSTEMD && !HAVE_ELOGIND
+#if !HAVE_LOGIND
 	swayidle_log(LOG_ERROR, "%s not supported: swayidle was compiled "
 			"with neither systemd nor elogind support.", "after-resume");
 	exit(-1);
@@ -495,7 +495,7 @@ static int parse_resume(int argc, char **argv) {
 }
 
 static int parse_lock(int argc, char **argv) {
-#if !HAVE_SYSTEMD && !HAVE_ELOGIND
+#if !HAVE_LOGIND
 	swayidle_log(LOG_ERROR, "%s not supported: swayidle was compiled"
 			" with neither systemd nor elogind support.", "lock");
 	exit(-1);
@@ -515,7 +515,7 @@ static int parse_lock(int argc, char **argv) {
 }
 
 static int parse_unlock(int argc, char **argv) {
-#if !HAVE_SYSTEMD && !HAVE_ELOGIND
+#if !HAVE_LOGIND
 	swayidle_log(LOG_ERROR, "%s not supported: swayidle was compiled"
 			" with neither systemd nor elogind support.", "unlock");
 	exit(-1);
@@ -535,7 +535,7 @@ static int parse_unlock(int argc, char **argv) {
 }
 
 static int parse_idlehint(int argc, char **argv) {
-#if !HAVE_SYSTEMD && !HAVE_ELOGIND
+#if !HAVE_LOGIND
 	swayidle_log(LOG_ERROR, "%s not supported: swayidle was compiled"
 			" with neither systemd nor elogind support.", "idlehint");
 	exit(-1);
@@ -687,7 +687,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	bool should_run = !wl_list_empty(&state.timeout_cmds);
-#if HAVE_SYSTEMD || HAVE_ELOGIND
+#if HAVE_LOGIND
 	connect_to_bus();
 	if (state.before_sleep_cmd || state.after_resume_cmd) {
 		should_run = true;
